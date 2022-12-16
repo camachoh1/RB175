@@ -19,8 +19,9 @@ loop do
   request_line = client.gets
   puts request_line
 
-  http_method, path, params = parse_request(request_line)
+  next unless request_line #dealing with empty requests.
 
+  http_method, path, params = parse_request(request_line)
 
   client.puts "HTTP/1.0 200 OK"
   client.puts "Content-Type: text/html"
@@ -33,10 +34,6 @@ loop do
   client.puts "This is the path: #{path}"
   client.puts "These are the parameters: #{params}"
   client.puts "</pre>"
-  
-  client.puts "<h1>Rolls!</h1>"
-  rolls = params["rolls"].to_i
-  sides = params["sides"].to_i
 
   client.puts "<h1>Counter</h1>"
 
