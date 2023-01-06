@@ -2,13 +2,17 @@ require "sinatra"
 require "sinatra/reloader"
 require "tilt/erubis"
 require "redcarpet"
+require "yaml"
+require "bcrypt"
 require 'pry'
+
 
 #setting up sessions.
 configure do
   enable :sessions
   set :sessions_secret, 'super secret'
 end
+
 
 #provides file directory for tests or program execution
 def data_path
@@ -34,9 +38,6 @@ def load_file_content(path)
     content
   when ".md"
     erb render_markdown(content)
-  else
-    headers["Content-Type"] = "text/plain"
-    content
   end
 end
 
@@ -49,7 +50,27 @@ def require_signed_in_user
     session[:message] = "You must be signed in to do that."
     redirect "/"
   end
-end 
+end
+
+def load_user_credentials
+  credentials_path = if ENV["RACK_ENV"] == "test"
+    File.expand_path("../test/users.yml", __FILE__)
+  else
+    File.expand_path("../users.yml", __FILE__)
+  end
+  YAML.load_file(credentials_path)
+end
+
+def valid_credentials?(username, password)
+  credentials = load_user_credentials
+
+  if credentials.key?(username)
+    bcrypt_password = BCrypt::Password.new(credentials[username])
+    bcrypt_password == password
+  else
+    false
+  end
+end
 
 #index page 
 get "/" do
@@ -65,6 +86,17 @@ get "/new" do
   require_signed_in_user
 
   erb :new
+end
+
+get "/view" do
+  file_path = File.join(data_path, File.basename(params[:filename]))
+
+  if file.exist?(file_path)
+    load_file_content(file_path)
+  else
+    session[:message] = "#{params[:filename]} does not exist."
+    redirect "/"
+  end
 end
 
 # display document
@@ -96,8 +128,10 @@ get "/users/signin" do
 end
 
 post "/users/signin" do
-  if params[:username] == "admin" && params[:password] == "secret"
-    session[:username] = params[:username]
+  username = params[:username]
+
+  if valid_credentials?(username, params[:password])
+    session[:username] = username
     session[:message] = "Welcome!"
     redirect "/"
   else

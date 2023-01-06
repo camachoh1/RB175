@@ -8,6 +8,10 @@ configure do
   set :session_secret, 'secret'
 end
 
+configure do
+  set :erb, :escape_html => true
+end
+
 helpers do
   def list_complete?(list)
     todos_count(list) > 0 && todos_remaining_count(list) == 0
@@ -38,7 +42,7 @@ helpers do
     incomplete_todos.each { |todo| yield(todo, todos.index(todo))}
     complete_todos.each { |todo| yield(todo, todos.index(todo))}
   end
-
+  
 end
 
 before do

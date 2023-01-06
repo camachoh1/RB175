@@ -5,7 +5,7 @@ require "tilt/erubis"
 helpers do
   def in_paragraphs(text)
     text.split("\n\n").each_with_index.map do |line, index|
-      "<p> id=paragraph#{index}>#{line} </p>"
+      "<p>id=paragraph#{index}>#{line}</p>"
     end.join
   end
 
